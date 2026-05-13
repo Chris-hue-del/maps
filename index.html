@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<title>Travel Footprints Air｜高級旅行足跡系統</title>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap"
+  rel="stylesheet"
+/>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+html,
+body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  font-family:'Inter','Noto Sans TC',sans-serif;
+  background:#edf4ff;
+  color:#1e293b;
+}
+
+/* =========================================================
+   ROOT
+========================================================= */
+
+:root{
+
+  --bg:#edf4ff;
+  --bg-soft:#f7fbff;
+
+  --panel:rgba(255,255,255,.74);
+  --panel-strong:rgba(255,255,255,.92);
+
+  --line:#d8e4f4;
+
+  --text:#0f172a;
+  --text-soft:#64748b;
+
+  --blue:#60a5fa;
+  --blue2:#93c5fd;
+
+  --sky:#7dd3fc;
+  --mint:#bae6fd;
+
+  --shadow:
+    0 10px 40px rgba(148,163,184,.18);
+
+  --radius:28px;
+
+  --transition:
+    .38s cubic-bezier(.22,.61,.36,1);
+
+}
+
+/* =========================================================
+   BODY
+========================================================= */
+
+body{
+  display:flex;
+}
+
+/* =========================================================
+   MAP
+========================================================= */
+
+#map-wrap{
+  position:relative;
+  flex:1;
+  overflow:hidden;
+}
+
+#map{
+  width:100%;
+  height:100%;
+}
+
+#map-wrap::after{
+
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  pointer-events:none;
+
+  background:
+
+    radial-gradient(
+      circle at top left,
+      rgba(125,211,252,.22),
+      transparent 30%
+    ),
+
+    radial-gradient(
+      circle at bottom right,
+      rgba(147,197,253,.18),
+      transparent 30%
+    ),
+
+    linear-gradient(
+      to bottom,
+      rgba(255,255,255,.04),
+      rgba(255,255,255,.24)
+    );
+}
+
+/* =========================================================
+   LEAFLET
+========================================================= */
+
+.leaflet-control-zoom{
+  border:none!important;
+  box-shadow:var(--shadow)!important;
+}
+
+.leaflet-control-zoom a{
+
+  width:44px!important;
+  height:44px!important;
+  line-height:44px!important;
+
+  background:rgba(255,255,255,.85)!important;
+
+  color:#2563eb!important;
+
+  border:none!important;
+
+  backdrop-filter:blur(12px);
+
+  transition:var(--transition);
+}
+
+.leaflet-control-zoom a:hover{
+  background:#dbeafe!important;
+}
+
+.leaflet-popup-content-wrapper{
+
+  background:rgba(255,255,255,.94);
+
+  backdrop-filter:blur(18px);
+
+  border-radius:28px;
+
+  overflow:hidden;
+
+  box-shadow:
+    0 20px 40px rgba(148,163,184,.18);
+
+}
+
+.leaflet-popup-tip{
+  background:#ffffff;
+}
+
+.leaflet-popup-content{
+  margin:0!important;
+}
+
+.leaflet-popup-close-button{
+  display:none;
+}
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+#loading{
+
+  position:absolute;
+  inset:0;
+
+  z-index:99999;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+
+  gap:24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eff6ff,
+      #f8fbff
+    );
+
+  transition:opacity .7s ease;
+}
+
+.loader{
+
+  width:82px;
+  height:82px;
+
+  border-radius:50%;
+
+  border:4px solid rgba(96,165,250,.15);
+
+  border-top:4px solid #60a5fa;
+
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+.loading-title{
+
+  font-size:1.1rem;
+  font-weight:800;
+
+  color:#2563eb;
+}
+
+.loading-sub{
+
+  color:#64748b;
+  font-size:.95rem;
+}
+
+/* =========================================================
+   BRAND
+========================================================= */
+
+#brand{
+
+  position:absolute;
+
+  left:28px;
+  bottom:28px;
+
+  width:350px;
+
+  z-index:800;
+
+  padding:30px;
+
+  border-radius:30px;
+
+  background:rgba(255,255,255,.7);
+
+  backdrop-filter:blur(22px);
+
+  border:1px solid rgba(255,255,255,.65);
+
+  box-shadow:var(--shadow);
+}
+
+.brand-badge{
+
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+
+  margin-bottom:18px;
+
+  color:#0284c7;
+
+  font-size:.72rem;
+  font-weight:800;
+
+  letter-spacing:.18em;
+
+  text-transform:uppercase;
+}
+
+.brand-title{
+
+  font-size:2.4rem;
+  line-height:1.02;
+
+  font-weight:900;
+
+  color:#0f172a;
+
+  margin-bottom:16px;
+}
+
+.brand-desc{
+
+  line-height:1.9;
+
+  color:#64748b;
+
+  font-size:.95rem;
+}
+
+/* =========================================================
+   TOPBAR
+========================================================= */
+
+#topbar{
+
+  position:absolute;
+
+  top:22px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  z-index:850;
+
+  display:flex;
+  align-items:center;
+  gap:14px;
+
+  padding:12px;
+
+  border-radius:999px;
+
+  background:rgba(255,255,255,.74);
+
+  backdrop-filter:blur(18px);
+
+  border:1px solid rgba(255,255,255,.65);
+
+  box-shadow:var(--shadow);
+}
+
+.btn{
+
+  height:52px;
+
+  border:none;
+
+  border-radius:999px;
+
+  padding:0 26px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+
+  cursor:pointer;
+
+  transition:var(--transition);
+
+  font-size:.95rem;
+  font-weight:800;
+}
+
+.btn svg{
+  width:18px;
+  height:18px;
+}
+
+.btn-primary{
+
+  background:
+    linear-gradient(
+      135deg,
+      #60a5fa,
+      #7dd3fc
+    );
+
+  color:white;
+}
+
+.btn-primary:hover{
+
+  transform:translateY(-3px);
+
+  box-shadow:
+    0 10px 25px rgba(96,165,250,.28);
+}
+
+.btn-secondary{
+
+  background:rgba(255,255,255,.8);
+
+  color:#2563eb;
+}
+
+.btn-secondary:hover{
+  background:#eff6ff;
+}
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+#sidebar{
+
+  width:400px;
+  height:100vh;
+
+  background:rgba(255,255,255,.84);
+
+  backdrop-filter:blur(24px);
+
+  border-left:1px solid rgba(255,255,255,.7);
+
+  display:flex;
+  flex-direction:column;
+
+  z-index:900;
+}
+
+.sidebar-header{
+
+  padding:30px;
+
+  border-bottom:1px solid #e2e8f0;
+}
+
+.sidebar-title{
+
+  font-size:1.5rem;
+  font-weight:900;
+
+  color:#0f172a;
+}
+
+.sidebar-sub{
+
+  margin-top:10px;
+
+  color:#64748b;
+
+  line-height:1.7;
+
+  font-size:.92rem;
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.stats{
+
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+
+  gap:12px;
+
+  margin-top:24px;
+}
+
+.stat{
+
+  padding:18px 12px;
+
+  border-radius:22px;
+
+  background:rgba(255,255,255,.7);
+
+  border:1px solid #e2e8f0;
+
+  text-align:center;
+}
+
+.stat-value{
+
+  font-size:1.3rem;
+  font-weight:900;
+
+  color:#2563eb;
+}
+
+.stat-label{
+
+  margin-top:6px;
+
+  font-size:.76rem;
+
+  color:#64748b;
+}
+
+/* =========================================================
+   LIST
+========================================================= */
+
+#list{
+
+  flex:1;
+
+  overflow-y:auto;
+
+  padding:18px;
+}
+
+#list::-webkit-scrollbar{
+  width:8px;
+}
+
+#list::-webkit-scrollbar-thumb{
+
+  background:#dbeafe;
+
+  border-radius:999px;
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+
+.card{
+
+  position:relative;
+
+  display:flex;
+  gap:14px;
+
+  padding:14px;
+
+  margin-bottom:14px;
+
+  border-radius:26px;
+
+  background:rgba(255,255,255,.78);
+
+  border:1px solid #e2e8f0;
+
+  overflow:hidden;
+
+  cursor:pointer;
+
+  transition:var(--transition);
+}
+
+.card::before{
+
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(96,165,250,.08),
+      transparent 60%
+    );
+
+  opacity:0;
+
+  transition:var(--transition);
+}
+
+.card:hover{
+
+  transform:translateY(-5px);
+
+  border-color:#93c5fd;
+
+  box-shadow:
+    0 12px 26px rgba(148,163,184,.14);
+}
+
+.card:hover::before{
+  opacity:1;
+}
+
+.card.active{
+
+  background:#eff6ff;
+
+  border-color:#93c5fd;
+
+  box-shadow:
+    0 10px 24px rgba(96,165,250,.18);
+}
+
+.card-img{
+
+  width:96px;
+  height:96px;
+
+  border-radius:22px;
+
+  overflow:hidden;
+
+  flex-shrink:0;
+}
+
+.card-img img{
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
+  transition:transform .8s ease;
+}
+
+.card:hover img{
+  transform:scale(1.08);
+}
+
+.card-content{
+
+  flex:1;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.card-top{
+
+  display:flex;
+  align-items:center;
+
+  gap:10px;
+}
+
+.card-index{
+
+  width:30px;
+  height:30px;
+
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:#dbeafe;
+
+  color:#2563eb;
+
+  font-size:.82rem;
+  font-weight:900;
+}
+
+.card-name{
+
+  font-size:1.06rem;
+  font-weight:900;
+
+  color:#0f172a;
+}
+
+.card-region{
+
+  margin-top:8px;
+
+  color:#64748b;
+
+  font-size:.92rem;
+
+  line-height:1.5;
+}
+
+/* =========================================================
+   MARKER
+========================================================= */
+
+.marker-wrap{
+  background:none;
+  border:none;
+}
+
+.marker{
+
+  width:34px;
+  height:34px;
+
+  border-radius:50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #60a5fa,
+      #7dd3fc
+    );
+
+  color:white;
+
+  border:2px solid white;
+
+  font-size:.82rem;
+  font-weight:900;
+
+  box-shadow:
+    0 10px 24px rgba(96,165,250,.28);
+
+  transition:var(--transition);
+}
+
+.marker.active{
+
+  transform:scale(1.28);
+
+  box-shadow:
+    0 0 0 14px rgba(125,211,252,.22),
+    0 12px 26px rgba(96,165,250,.3);
+}
+
+/* =========================================================
+   POPUP
+========================================================= */
+
+.popup-image{
+
+  width:100%;
+  height:190px;
+
+  object-fit:cover;
+}
+
+.popup-content{
+  padding:24px;
+}
+
+.popup-title{
+
+  font-size:1.35rem;
+  font-weight:900;
+
+  color:#0f172a;
+}
+
+.popup-region{
+
+  margin-top:8px;
+
+  color:#64748b;
+}
+
+.popup-desc{
+
+  margin-top:16px;
+
+  line-height:1.85;
+
+  color:#475569;
+
+  font-size:.95rem;
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+#progress-wrap{
+
+  position:absolute;
+
+  left:0;
+  right:0;
+  bottom:0;
+
+  z-index:999;
+
+  height:5px;
+
+  background:rgba(255,255,255,.45);
+
+  overflow:hidden;
+
+  display:none;
+}
+
+#progress{
+
+  width:0%;
+
+  height:100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #60a5fa,
+      #7dd3fc
+    );
+
+  transition:width .3s ease;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media(max-width:980px){
+
+  body{
+    flex-direction:column;
+  }
+
+  #map-wrap{
+    height:58vh;
+  }
+
+  #sidebar{
+    width:100%;
+    height:42vh;
+  }
+
+  #brand{
+
+    width:260px;
+
+    left:16px;
+    bottom:16px;
+
+    padding:22px;
+  }
+
+  .brand-title{
+    font-size:1.8rem;
+  }
+
+  #topbar{
+
+    width:calc(100% - 24px);
+
+    top:16px;
+  }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     LOADING
+========================================================= -->
+
+<div id="loading">
+
+  <div class="loader"></div>
+
+  <div class="loading-title">
+    Travel Footprints Air
+  </div>
+
+  <div class="loading-sub">
+    正在建立高質感旅行航線與城市資料...
+  </div>
+
+</div>
+
+<!-- =========================================================
+     MAP
+========================================================= -->
+
+<div id="map-wrap">
+
+  <div id="map"></div>
+
+  <!-- BRAND -->
+
+  <div id="brand">
+
+    <div class="brand-badge">
+      ✦ AIR JOURNEY EXPERIENCE
+    </div>
+
+    <div class="brand-title">
+      Travel<br>
+      Footprints
+    </div>
+
+    <div class="brand-desc">
+      以柔和天空色調重構旅遊足跡體驗，
+      結合城市影像、動態飛行航線與沉浸式互動介面，
+      建立具有高級感與現代感的旅行地圖系統。
+    </div>
+
+  </div>
+
+  <!-- TOPBAR -->
+
+  <div id="topbar">
+
+    <button class="btn btn-primary" id="playBtn">
+
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+
+      開始飛行
+
+    </button>
+
+    <button class="btn btn-secondary" id="resetBtn">
+
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6a6 6 0 01-6 6 6 6 0 01-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+      </svg>
+
+      重置地圖
+
+    </button>
+
+  </div>
+
+  <!-- PROGRESS -->
+
+  <div id="progress-wrap">
+    <div id="progress"></div>
+  </div>
+
+</div>
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside id="sidebar">
+
+  <div class="sidebar-header">
+
+    <div class="sidebar-title">
+      Flight Timeline
+    </div>
+
+    <div class="sidebar-sub">
+      城市停靠紀錄、旅行節點與航線動畫時間軸。
+    </div>
+
+    <div class="stats">
+
+      <div class="stat">
+        <div class="stat-value" id="statCities">13</div>
+        <div class="stat-label">城市</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">國家</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-value">2026</div>
+        <div class="stat-label">旅程</div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="list"></div>
+
+</aside>
+
+<!-- =========================================================
+     SCRIPT
+========================================================= -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+/* =========================================================
+   DATA
+========================================================= */
+
+const locations = [
+
+  {
+    id:1,
+    name:"上海",
+    region:"中國｜上海市",
+    lat:31.2304,
+    lng:121.4737,
+    desc:"東方現代都會與歷史租界交錯的國際城市。",
+    img:""
+  },
+
+  {
+    id:2,
+    name:"成都",
+    region:"中國｜四川省",
+    lat:30.6586,
+    lng:104.0648,
+    desc:"巴蜀文化、美食與慢生活節奏的代表城市。",
+    img:""
+  },
+
+  {
+    id:3,
+    name:"武漢",
+    region:"中國｜湖北省",
+    lat:30.5928,
+    lng:114.3055,
+    desc:"長江與漢水交會的重要核心城市。",
+    img:""
+  },
+
+  {
+    id:4,
+    name:"九寨溝",
+    region:"中國｜四川省",
+    lat:33.2615,
+    lng:103.9189,
+    desc:"擁有世界級高山湖泊與彩色森林景觀。",
+    img:""
+  },
+
+  {
+    id:5,
+    name:"烏鎮",
+    region:"中國｜浙江省",
+    lat:30.7497,
+    lng:120.4851,
+    desc:"典型江南水鄉古鎮與石橋運河文化。",
+    img:""
+  },
+
+  {
+    id:6,
+    name:"重慶",
+    region:"中國｜重慶市",
+    lat:29.5630,
+    lng:106.5516,
+    desc:"山城立體城市景觀與霧夜光影著名。",
+    img:""
+  },
+
+  {
+    id:7,
+    name:"香港",
+    region:"中國｜香港",
+    lat:22.3193,
+    lng:114.1694,
+    desc:"東西文化融合的亞洲金融與港灣都市。",
+    img:""
+  },
+
+  {
+    id:8,
+    name:"澳門",
+    region:"中國｜澳門",
+    lat:22.1987,
+    lng:113.5439,
+    desc:"葡式歷史街區與現代娛樂建築並存。",
+    img:""
+  },
+
+  {
+    id:9,
+    name:"廣州",
+    region:"中國｜廣東省",
+    lat:23.1291,
+    lng:113.2644,
+    desc:"嶺南文化、美食與商業歷史的重要中心。",
+    img:""
+  },
+
+  {
+    id:10,
+    name:"下龍灣",
+    region:"越南｜廣寧省",
+    lat:20.9101,
+    lng:107.1839,
+    desc:"石灰岩海灣與世界自然遺產景觀。",
+    img:""
+  },
+
+  {
+    id:11,
+    name:"峴港",
+    region:"越南｜峴港市",
+    lat:16.0544,
+    lng:108.2022,
+    desc:"結合海岸城市與現代度假氛圍。",
+    img:""
+  },
+
+  {
+    id:12,
+    name:"會安",
+    region:"越南｜廣南省",
+    lat:15.8801,
+    lng:108.3380,
+    desc:"古城燈籠夜景與歷史港口文化著名。",
+    img:""
+  },
+
+  {
+    id:13,
+    name:"河內",
+    region:"越南｜河內市",
+    lat:21.0285,
+    lng:105.8542,
+    desc:"融合法式殖民建築、湖泊文化與歷史氛圍的越南首都。",
+    img:""
+  }
+
+];
+
+/* =========================================================
+   MAP
+========================================================= */
+
+const map = L.map("map",{
+  zoomControl:false,
+  attributionControl:false,
+  worldCopyJump:true
+});
+
+map.setView([24,112],5);
+
+L.control.zoom({
+  position:"bottomright"
+}).addTo(map);
+
+L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+  {
+    subdomains:"abcd",
+    maxZoom:20
+  }
+).addTo(map);
+
+/* =========================================================
+   STATE
+========================================================= */
+
+const markers = {};
+
+let staticLine = null;
+let animatedLine = null;
+let planeMarker = null;
+
+let isPlaying = false;
+let raf = null;
+
+/* =========================================================
+   WIKI IMAGE
+========================================================= */
+
+async function fetchWikiImage(title){
+
+  const url =
+    `https://zh.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&pithumbsize=1200&redirects=1&titles=${encodeURIComponent(title)}&origin=*`;
+
+  try{
+
+    const res = await fetch(url);
+
+    const data = await res.json();
+
+    const pages = data.query.pages;
+
+    const pageId = Object.keys(pages)[0];
+
+    if(
+      pageId !== "-1" &&
+      pages[pageId].thumbnail
+    ){
+      return pages[pageId].thumbnail.source;
+    }
+
+  }catch(error){
+
+    console.error(error);
+
+  }
+
+  return "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop";
+
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function sleep(ms){
+  return new Promise(resolve=>setTimeout(resolve,ms));
+}
+
+function cubic(t){
+
+  return t<0.5
+    ?4*t*t*t
+    :1-Math.pow(-2*t+2,3)/2;
+}
+
+function controlPoint(a,b,k=.24){
+
+  const midLat = (a.lat+b.lat)/2;
+
+  const midLng = (a.lng+b.lng)/2;
+
+  const dLat = b.lat-a.lat;
+
+  const dLng = b.lng-a.lng;
+
+  return{
+    lat:midLat-dLng*k,
+    lng:midLng+dLat*k
+  };
+}
+
+function bezier(t,p0,p1,p2){
+
+  return(
+    (1-t)*(1-t)*p0+
+    2*(1-t)*t*p1+
+    t*t*p2
+  );
+}
+
+function createCurve(a,b,steps=100){
+
+  const c = controlPoint(a,b);
+
+  const pts = [];
+
+  for(let i=0;i<=steps;i++){
+
+    const t = i/steps;
+
+    pts.push([
+
+      bezier(
+        t,
+        a.lat,
+        c.lat,
+        b.lat
+      ),
+
+      bezier(
+        t,
+        a.lng,
+        c.lng,
+        b.lng
+      )
+
+    ]);
+
+  }
+
+  return pts;
+}
+
+function getAngle(p1,p2){
+
+  const dy = p2[0]-p1[0];
+
+  const dx =
+    Math.cos(Math.PI/180*p1[0])*
+    (p2[1]-p1[1]);
+
+  return(
+    -Math.atan2(dy,dx)*180/Math.PI
+  )+90;
+}
+
+/* =========================================================
+   UI
+========================================================= */
+
+function activateLocation(id){
+
+  document
+    .querySelectorAll(".marker")
+    .forEach(el=>el.classList.remove("active"));
+
+  document
+    .querySelectorAll(".card")
+    .forEach(el=>el.classList.remove("active"));
+
+  const marker =
+    document.getElementById(`marker-${id}`);
+
+  if(marker){
+    marker.classList.add("active");
+  }
+
+  const card =
+    document.getElementById(`card-${id}`);
+
+  if(card){
+
+    card.classList.add("active");
+
+    card.scrollIntoView({
+      behavior:"smooth",
+      block:"nearest"
+    });
+
+  }
+
+}
+
+/* =========================================================
+   FOCUS
+========================================================= */
+
+function focusLocation(id){
+
+  const loc =
+    locations.find(x=>x.id===id);
+
+  activateLocation(id);
+
+  map.flyTo(
+    [loc.lat,loc.lng],
+    8,
+    {
+      duration:2
+    }
+  );
+
+  markers[id].openPopup();
+}
+
+/* =========================================================
+   STATIC ROUTE
+========================================================= */
+
+function drawStaticRoute(){
+
+  if(staticLine){
+    map.removeLayer(staticLine);
+  }
+
+  let pts = [];
+
+  for(let i=0;i<locations.length-1;i++){
+
+    pts = pts.concat(
+      createCurve(
+        locations[i],
+        locations[i+1]
+      )
+    );
+  }
+
+  staticLine = L.polyline(pts,{
+    color:"#60a5fa",
+    weight:3,
+    opacity:.45,
+    dashArray:"10 12",
+    lineCap:"round"
+  }).addTo(map);
+}
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function clearAnimation(){
+
+  if(animatedLine){
+    map.removeLayer(animatedLine);
+    animatedLine = null;
+  }
+
+  if(planeMarker){
+    map.removeLayer(planeMarker);
+    planeMarker = null;
+  }
+
+  if(raf){
+    cancelAnimationFrame(raf);
+  }
+
+}
+
+/* =========================================================
+   AIRPLANE ICON
+========================================================= */
+
+const planeHTML = `
+
+<div style="
+  width:58px;
+  height:58px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+">
+
+<svg
+  class="plane-svg"
+  width="52"
+  height="52"
+  viewBox="0 0 24 24"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  style="
+    filter:
+      drop-shadow(0 10px 18px rgba(96,165,250,.35));
+    transition:transform .04s linear;
+  "
+>
+
+<path
+  d="M21 16V14L13 9V3.5A1.5 1.5 0 0011.5 2h-1A1.5 1.5 0 009 3.5V9L1 14V16L9 14L9 19L6.5 20.5V22L11 20.5L15.5 22V20.5L13 19V14L21 16Z"
+  fill="url(#g)"
+/>
+
+<defs>
+
+<linearGradient
+  id="g"
+  x1="0"
+  y1="0"
+  x2="24"
+  y2="24"
+>
+
+<stop stop-color="#60A5FA"/>
+<stop offset="1" stop-color="#7DD3FC"/>
+
+</linearGradient>
+
+</defs>
+
+</svg>
+
+</div>
+
+`;
+
+/* =========================================================
+   ANIMATE SEGMENT
+========================================================= */
+
+function animateSegment(start,end){
+
+  return new Promise(resolve=>{
+
+    const duration = 2400;
+
+    const points =
+      createCurve(start,end,120);
+
+    let startTime = null;
+
+    function frame(timestamp){
+
+      if(!isPlaying){
+        resolve();
+        return;
+      }
+
+      if(!startTime){
+        startTime = timestamp;
+      }
+
+      const elapsed =
+        timestamp-startTime;
+
+      const raw =
+        Math.min(elapsed/duration,1);
+
+      const eased =
+        cubic(raw);
+
+      const index =
+        Math.min(
+          Math.floor(
+            eased*(points.length-1)
+          ),
+          points.length-2
+        );
+
+      const sub =
+        (eased*(points.length-1))%1;
+
+      const lat =
+        points[index][0]+
+        (points[index+1][0]-points[index][0])*sub;
+
+      const lng =
+        points[index][1]+
+        (points[index+1][1]-points[index][1])*sub;
+
+      planeMarker.setLatLng([lat,lng]);
+
+      const angle =
+        getAngle(
+          points[index],
+          points[index+1]
+        );
+
+      const svg =
+        planeMarker
+          .getElement()
+          ?.querySelector(".plane-svg");
+
+      if(svg){
+        svg.style.transform =
+          `rotate(${angle}deg)`;
+      }
+
+      const existing =
+        animatedLine.getLatLngs();
+
+      if(existing.length===0){
+
+        animatedLine.addLatLng([lat,lng]);
+
+      }else{
+
+        existing[existing.length-1] =
+          L.latLng(lat,lng);
+
+        animatedLine.setLatLngs(existing);
+
+      }
+
+      map.panTo(
+        [lat,lng],
+        {
+          animate:false
+        }
+      );
+
+      if(raw<1){
+
+        raf =
+          requestAnimationFrame(frame);
+
+      }else{
+
+        animatedLine.addLatLng(
+          points[points.length-1]
+        );
+
+        resolve();
+      }
+
+    }
+
+    raf =
+      requestAnimationFrame(frame);
+
+  });
+
+}
+
+/* =========================================================
+   START JOURNEY
+========================================================= */
+
+async function startJourney(){
+
+  if(isPlaying){
+    return;
+  }
+
+  isPlaying = true;
+
+  updatePlayButton(true);
+
+  clearAnimation();
+
+  if(staticLine){
+    map.removeLayer(staticLine);
+  }
+
+  document
+    .getElementById("progress-wrap")
+    .style.display = "block";
+
+  animatedLine = L.polyline([],{
+    color:"#38bdf8",
+    weight:5,
+    opacity:1,
+    lineCap:"round",
+    lineJoin:"round"
+  }).addTo(map);
+
+  const planeIcon =
+    L.divIcon({
+      html:planeHTML,
+      className:"",
+      iconSize:[58,58],
+      iconAnchor:[29,29]
+    });
+
+  planeMarker =
+    L.marker(
+      [
+        locations[0].lat,
+        locations[0].lng
+      ],
+      {
+        icon:planeIcon,
+        zIndexOffset:9999
+      }
+    ).addTo(map);
+
+  for(let i=0;i<locations.length;i++){
+
+    if(!isPlaying){
+      break;
+    }
+
+    const current =
+      locations[i];
+
+    activateLocation(current.id);
+
+    document
+      .getElementById("progress")
+      .style.width =
+        `${(i/(locations.length-1))*100}%`;
+
+    map.flyTo(
+      [current.lat,current.lng],
+      7,
+      {
+        duration:1.8
+      }
+    );
+
+    markers[current.id].openPopup();
+
+    await sleep(1800);
+
+    if(
+      i<locations.length-1 &&
+      isPlaying
+    ){
+
+      map.closePopup();
+
+      await animateSegment(
+        current,
+        locations[i+1]
+      );
+
+    }
+
+  }
+
+  stopJourney();
+
+}
+
+/* =========================================================
+   STOP
+========================================================= */
+
+function stopJourney(){
+
+  isPlaying = false;
+
+  updatePlayButton(false);
+
+  clearAnimation();
+
+  drawStaticRoute();
+
+}
+
+/* =========================================================
+   BUTTON
+========================================================= */
+
+function updatePlayButton(playing){
+
+  const btn =
+    document.getElementById("playBtn");
+
+  if(playing){
+
+    btn.innerHTML = `
+
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 6h4v12H6zm8 0h4v12h-4z"/>
+      </svg>
+
+      停止飛行
+
+    `;
+
+  }else{
+
+    btn.innerHTML = `
+
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+
+      開始飛行
+
+    `;
+  }
+
+}
+
+/* =========================================================
+   INIT
+========================================================= */
+
+async function init(){
+
+  await Promise.all(
+
+    locations.map(async loc=>{
+
+      loc.img =
+        await fetchWikiImage(loc.name);
+
+    })
+
+  );
+
+  const list =
+    document.getElementById("list");
+
+  for(const loc of locations){
+
+    const icon =
+      L.divIcon({
+
+        className:"marker-wrap",
+
+        html:`
+
+          <div
+            class="marker"
+            id="marker-${loc.id}"
+          >
+            ${loc.id}
+          </div>
+
+        `,
+
+        iconSize:[34,34],
+        iconAnchor:[17,17]
+
+      });
+
+    const marker =
+      L.marker(
+        [loc.lat,loc.lng],
+        {icon}
+      ).addTo(map);
+
+    markers[loc.id] = marker;
+
+    marker.bindPopup(`
+
+      <div>
+
+        <img
+          class="popup-image"
+          src="${loc.img}"
+          alt="${loc.name}"
+        >
+
+        <div class="popup-content">
+
+          <div class="popup-title">
+            ${loc.name}
+          </div>
+
+          <div class="popup-region">
+            ${loc.region}
+          </div>
+
+          <div class="popup-desc">
+            ${loc.desc}
+          </div>
+
+        </div>
+
+      </div>
+
+    `);
+
+    marker.on("click",()=>{
+      activateLocation(loc.id);
+    });
+
+    const card =
+      document.createElement("div");
+
+    card.className = "card";
+
+    card.id = `card-${loc.id}`;
+
+    card.innerHTML = `
+
+      <div class="card-img">
+
+        <img
+          src="${loc.img}"
+          alt="${loc.name}"
+          loading="lazy"
+        >
+
+      </div>
+
+      <div class="card-content">
+
+        <div class="card-top">
+
+          <div class="card-index">
+            ${loc.id}
+          </div>
+
+          <div class="card-name">
+            ${loc.name}
+          </div>
+
+        </div>
+
+        <div class="card-region">
+          ${loc.region}
+        </div>
+
+      </div>
+
+    `;
+
+    card.addEventListener(
+      "click",
+      ()=>{
+
+        if(!isPlaying){
+          focusLocation(loc.id);
+        }
+
+      }
+    );
+
+    list.appendChild(card);
+
+  }
+
+  const group =
+    L.featureGroup(
+      Object.values(markers)
+    );
+
+  map.fitBounds(
+    group.getBounds(),
+    {
+      padding:[80,80]
+    }
+  );
+
+  drawStaticRoute();
+
+  const loading =
+    document.getElementById("loading");
+
+  loading.style.opacity = "0";
+
+  setTimeout(()=>{
+
+    loading.style.display = "none";
+
+  },700);
+
+}
+
+/* =========================================================
+   EVENTS
+========================================================= */
+
+document
+  .getElementById("playBtn")
+  .addEventListener("click",()=>{
+
+    if(isPlaying){
+
+      stopJourney();
+
+    }else{
+
+      startJourney();
+
+    }
+
+  });
+
+document
+  .getElementById("resetBtn")
+  .addEventListener("click",()=>{
+
+    stopJourney();
+
+    document
+      .querySelectorAll(".card")
+      .forEach(el=>el.classList.remove("active"));
+
+    document
+      .querySelectorAll(".marker")
+      .forEach(el=>el.classList.remove("active"));
+
+    map.closePopup();
+
+    document
+      .getElementById("progress-wrap")
+      .style.display = "none";
+
+    document
+      .getElementById("progress")
+      .style.width = "0%";
+
+    const group =
+      L.featureGroup(
+        Object.values(markers)
+      );
+
+    map.fitBounds(
+      group.getBounds(),
+      {
+        padding:[80,80]
+      }
+    );
+
+  });
+
+/* =========================================================
+   START
+========================================================= */
+
+init();
+
+</script>
+
+</body>
+</html>
